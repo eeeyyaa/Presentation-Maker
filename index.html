@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Presentation Generator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="brand-name">PRES</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" id="btnSave" title="Export deployable HTML">Save</button>
+      <button class="btn btn-ghost" id="btnLoad" title="Load .html or .json">Load</button>
+      <button class="btn btn-primary" id="btnPresent" title="Start presentation">Present</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Slides panel -->
+    <aside class="slides-panel">
+      <div class="panel-header">
+        <span class="panel-title">Slides</span>
+        <span class="panel-count" id="slideCount">0</span>
+      </div>
+      <div class="slides-list" id="slidesList"></div>
+      <button class="btn btn-block btn-outline" id="btnAddSlide">+ Add Slide</button>
+    </aside>
+
+    <!-- Canvas area -->
+    <section class="canvas-area">
+      <div class="canvas-wrap" id="canvasWrap">
+        <div class="canvas-frame" id="canvasFrame">
+          <div class="canvas" id="canvas">
+            <div class="canvas-empty" id="canvasEmpty">No slide selected</div>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-toolbar">
+        <button class="btn btn-ghost" data-add="text">+ Text</button>
+        <button class="btn btn-ghost" data-add="rect">+ Rect</button>
+        <button class="btn btn-ghost" data-add="circle">+ Circle</button>
+        <span class="toolbar-sep"></span>
+        <button class="btn btn-ghost btn-danger" id="btnDeleteElement" disabled>Delete element</button>
+      </div>
+    </section>
+
+    <!-- Properties panel -->
+    <aside class="properties-panel" id="propertiesPanel">
+      <div class="panel-header">
+        <span class="panel-title">Properties</span>
+      </div>
+      <div class="properties-body" id="propertiesBody">
+        <div class="empty-hint">Select a slide or element</div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Present mode overlay -->
+  <div class="present-overlay" id="presentOverlay" hidden>
+    <div class="present-stage" id="presentStage"></div>
+    <div class="present-controls">
+      <button class="btn btn-ghost" id="btnPrev">‹ Prev</button>
+      <span class="present-counter" id="presentCounter">1 / 1</span>
+      <button class="btn btn-ghost" id="btnNext">Next ›</button>
+      <button class="btn btn-ghost" id="btnExitPresent">Exit (Esc)</button>
+    </div>
+  </div>
+
+  <input type="file" id="fileLoader" accept=".html,.htm,.json,application/json,text/html" hidden />
+
+  <script src="app.js"></script>
+</body>
+</html>
