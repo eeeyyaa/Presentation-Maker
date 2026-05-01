@@ -14,7 +14,7 @@
     </div>
     <div class="topbar-actions">
       <button class="btn btn-ghost" id="btnSave" title="Export deployable HTML">Save</button>
-      <button class="btn btn-ghost" id="btnLoad" title="Load .html or .json">Load</button>
+      <button class="btn btn-ghost" id="btnLoad" title="Load project / image / video / URL shortcut">Load</button>
       <button class="btn btn-primary" id="btnPresent" title="Start presentation">Present</button>
     </div>
   </header>
@@ -43,6 +43,9 @@
         <button class="btn btn-ghost" data-add="text">+ Text</button>
         <button class="btn btn-ghost" data-add="rect">+ Rect</button>
         <button class="btn btn-ghost" data-add="circle">+ Circle</button>
+        <button class="btn btn-ghost" data-add="image">+ Image</button>
+        <button class="btn btn-ghost" data-add="video">+ Video</button>
+        <button class="btn btn-ghost" data-add="linkcard">+ Link Card</button>
         <span class="toolbar-sep"></span>
         <button class="btn btn-ghost btn-danger" id="btnDeleteElement" disabled>Delete element</button>
       </div>
@@ -70,7 +73,7 @@
     </div>
   </div>
 
-  <input type="file" id="fileLoader" accept=".html,.htm,.json,application/json,text/html" hidden />
+  <input type="file" id="fileLoader" accept=".html,.htm,.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.avif,.mp4,.webm,.mov,.m4v,.ogv,.mkv,.url,.webloc,.txt,application/json,text/html,text/plain,image/*,video/*" hidden />
 
   <script src="app.js"></script>
 </body>
