@@ -70,21 +70,17 @@ html, body { margin: 0; padding: 0; height: 100%; background: #000; color: #fff;
 .el.shape-rect { border-radius: 4px; }
 .el.shape-circle { border-radius: 50%; }
 .el[data-link] { cursor: pointer; }
-.el.linkcard { display:flex; background:#181818; border:1px solid #262626; border-radius:8px; overflow:hidden; }
-.linkcard-image { flex:0 0 35%; background-size:cover; background-position:top center; background-repeat:no-repeat; background-color:#1f1f1f; }
-.linkcard-meta { flex:1; padding:14px 18px; min-width:0; overflow:hidden; display:flex; flex-direction:column; justify-content:center; gap:4px; font-family:inherit; }
-.linkcard-domain { font-size:11px; letter-spacing:0.06em; color:#9a9a9a; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.linkcard-title { font-size:16px; font-weight:600; color:#ededed; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.linkcard-desc { font-size:13px; color:#9a9a9a; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.el.hover-scale:hover { transform: scale(1.05); }
-.el.hover-glow:hover { filter: drop-shadow(0 0 12px rgba(255,255,255,0.55)); }
-.el.hover-lift:hover { transform: translateY(-6px); }
-.el.hover-fade:hover { opacity: 0.6; }
-@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes slideRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes scaleUp { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+.el.linkcard { background:#1f1f1f; border-radius:8px; overflow:hidden; }
+.linkcard-image { position:absolute; inset:0; background-size:cover; background-position:top center; background-repeat:no-repeat; background-color:#1f1f1f; }
+.el.hover-scale:hover { transform: scale(calc(1 + 0.05 * var(--hover-strength, 1))); }
+.el.hover-glow:hover { filter: drop-shadow(0 0 calc(12px * var(--hover-strength, 1)) rgba(255,255,255,0.55)); }
+.el.hover-lift:hover { transform: translateY(calc(-6px * var(--hover-strength, 1))); }
+.el.hover-fade:hover { opacity: calc(1 - 0.4 * var(--hover-strength, 1)); }
+@keyframes fadeIn { from { opacity: calc(1 - var(--motion-strength, 1)); } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(calc(30px * var(--motion-strength, 1))); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideLeft { from { opacity: 0; transform: translateX(calc(-40px * var(--motion-strength, 1))); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(calc(40px * var(--motion-strength, 1))); } to { opacity: 1; transform: translateX(0); } }
+@keyframes scaleUp { from { opacity: 0; transform: scale(calc(1 - 0.15 * var(--motion-strength, 1))); } to { opacity: 1; transform: scale(1); } }
 .anim-fade { animation: fadeIn .6s ease both; }
 .anim-up { animation: slideUp .6s cubic-bezier(.2,.8,.2,1) both; }
 .anim-left { animation: slideLeft .6s cubic-bezier(.2,.8,.2,1) both; }
@@ -150,6 +146,9 @@ body:hover .hud, .hud:hover { opacity: 1; }
       node.className=cls;
       node.style.left=el.x+'px'; node.style.top=el.y+'px';
       node.style.width=el.w+'px'; node.style.height=el.h+'px';
+      node.style.setProperty('--hover-strength', String(el.hoverStrength!=null?el.hoverStrength:1));
+      node.style.setProperty('--motion-strength', String(el.motionStrength!=null?el.motionStrength:1));
+      if(el.rotation) node.style.transform='rotate('+el.rotation+'deg)';
       if(el.type==='text'){
         node.style.fontFamily=fontFamily(el.font);
         node.style.fontSize=el.fontSize+'px';
@@ -182,18 +181,10 @@ body:hover .hud, .hud:hover { opacity: 1; }
         if(el.autoplay!==false){ vid.autoplay=true; vid.muted=true; setTimeout(function(){ vid.play && vid.play().catch(function(){}); },0); }
         node.appendChild(vid);
       } else if(el.type==='linkcard'){
-        if(el.image){
-          var lcImg=document.createElement('div');
-          lcImg.className='linkcard-image';
-          lcImg.style.backgroundImage='url("'+el.image+'")';
-          node.appendChild(lcImg);
-        }
-        var lcMeta=document.createElement('div');
-        lcMeta.className='linkcard-meta';
-        if(el.domain){ var lcDom=document.createElement('div'); lcDom.className='linkcard-domain'; lcDom.textContent=el.domain; lcMeta.appendChild(lcDom); }
-        if(el.title){ var lcT=document.createElement('div'); lcT.className='linkcard-title'; lcT.textContent=el.title; lcMeta.appendChild(lcT); }
-        if(el.description){ var lcD=document.createElement('div'); lcD.className='linkcard-desc'; lcD.textContent=el.description; lcMeta.appendChild(lcD); }
-        node.appendChild(lcMeta);
+        var lcImg=document.createElement('div');
+        lcImg.className='linkcard-image';
+        if(el.image) lcImg.style.backgroundImage='url("'+el.image+'")';
+        node.appendChild(lcImg);
       } else {
         node.style.background=el.fill;
       }
@@ -274,6 +265,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       align: 'left',
       hover: 'none',
       motion: 'none',
+      hoverStrength: 1,
+      motionStrength: 1,
       link: '',
     }, props);
   }
@@ -286,6 +279,23 @@ body:hover .hud, .hud:hover { opacity: 1; }
       fill: '#ffffff',
       hover: 'none',
       motion: 'none',
+      hoverStrength: 1,
+      motionStrength: 1,
+      link: '',
+    }, props);
+  }
+
+  function lineEl(props) {
+    return Object.assign({
+      id: uid('el'),
+      type: 'line',
+      x: 240, y: 358, w: 800, h: 4,
+      fill: '#ffffff',
+      rotation: 0,
+      hover: 'none',
+      motion: 'none',
+      hoverStrength: 1,
+      motionStrength: 1,
       link: '',
     }, props);
   }
@@ -299,6 +309,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       fit: 'cover',
       hover: 'none',
       motion: 'none',
+      hoverStrength: 1,
+      motionStrength: 1,
       link: '',
     }, props);
   }
@@ -316,6 +328,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       controls: false,
       hover: 'none',
       motion: 'none',
+      hoverStrength: 1,
+      motionStrength: 1,
       link: '',
     }, props);
   }
@@ -324,13 +338,12 @@ body:hover .hud, .hud:hover { opacity: 1; }
     return Object.assign({
       id: uid('el'),
       type: 'linkcard',
-      x: 280, y: 220, w: 720, h: 160,
-      title: '',
-      description: '',
+      x: 320, y: 180, w: 640, h: 360,
       image: '',
-      domain: '',
       hover: 'hover-lift',
       motion: 'none',
+      hoverStrength: 1,
+      motionStrength: 1,
       link: url || '',
     }, props);
   }
@@ -358,28 +371,6 @@ body:hover .hud, .hud:hover { opacity: 1; }
     let q = '?w=1024';
     if (opts && opts.bust) q += '&_=' + Date.now();
     return 'https://s0.wp.com/mshots/v1/' + encodeURIComponent(target) + q;
-  }
-
-  async function fetchLinkPreview(url, opts) {
-    const target = normalizeUrl(url);
-    if (!target) return null;
-    let title = '', description = '';
-    try {
-      const resp = await fetch('https://api.microlink.io/?url=' + encodeURIComponent(target));
-      if (resp.ok) {
-        const json = await resp.json();
-        if (json.status === 'success' && json.data) {
-          title = json.data.title || '';
-          description = json.data.description || '';
-        }
-      }
-    } catch (e) { /* metadata fetch best-effort; screenshot still works */ }
-    return {
-      title: title,
-      description: description,
-      image: screenshotUrl(target, opts),
-      domain: extractDomain(target),
-    };
   }
 
   function fitToCanvas(natW, natH, maxW, maxH) {
@@ -694,12 +685,15 @@ body:hover .hud, .hud:hover { opacity: 1; }
 
   function buildElementNode(el, preview) {
     const node = document.createElement('div');
-    node.className = 'el ' + (el.type === 'text' ? 'text' : 'shape-' + el.type);
+    node.className = 'el ' + elTypeClass(el.type);
     if (!preview && el.id === state.selectedElementId) node.classList.add('selected');
     node.style.left = el.x + 'px';
     node.style.top = el.y + 'px';
     node.style.width = el.w + 'px';
     node.style.height = el.h + 'px';
+    node.style.setProperty('--hover-strength', String(el.hoverStrength != null ? el.hoverStrength : 1));
+    node.style.setProperty('--motion-strength', String(el.motionStrength != null ? el.motionStrength : 1));
+    if (el.rotation) node.style.transform = 'rotate(' + el.rotation + 'deg)';
 
     if (el.type === 'text') {
       node.style.fontFamily = resolveFontFamily(el.font);
@@ -881,34 +875,41 @@ body:hover .hud, .hud:hover { opacity: 1; }
     return s;
   }
 
+  function elTypeClass(type) {
+    if (type === 'text' || type === 'image' || type === 'video' || type === 'linkcard') return type;
+    return 'shape-' + type;
+  }
+
+  function buildStrengthRow(el, field) {
+    const r = row('Strength');
+    const range = document.createElement('input');
+    range.type = 'range';
+    range.className = 'prop-range';
+    range.min = '0';
+    range.max = '400';
+    range.step = '5';
+    const current = (el[field] != null ? el[field] : 1) * 100;
+    range.value = String(current);
+    const val = document.createElement('span');
+    val.className = 'prop-value';
+    val.textContent = Math.round(current) + '%';
+    range.addEventListener('input', () => {
+      const v = parseFloat(range.value) / 100;
+      val.textContent = range.value + '%';
+      const patch = {};
+      patch[field] = v;
+      updateElement(el.id, patch, { skipPropsRender: true });
+    });
+    r.appendChild(range);
+    r.appendChild(val);
+    return r;
+  }
+
   function buildLinkcardChildren(node, el) {
-    if (el.image) {
-      const imgDiv = document.createElement('div');
-      imgDiv.className = 'linkcard-image';
-      imgDiv.style.backgroundImage = 'url("' + el.image + '")';
-      node.appendChild(imgDiv);
-    }
-    const meta = document.createElement('div');
-    meta.className = 'linkcard-meta';
-    if (el.domain) {
-      const d = document.createElement('div');
-      d.className = 'linkcard-domain';
-      d.textContent = el.domain;
-      meta.appendChild(d);
-    }
-    if (el.title) {
-      const t = document.createElement('div');
-      t.className = 'linkcard-title';
-      t.textContent = el.title;
-      meta.appendChild(t);
-    }
-    if (el.description) {
-      const dsc = document.createElement('div');
-      dsc.className = 'linkcard-desc';
-      dsc.textContent = el.description;
-      meta.appendChild(dsc);
-    }
-    node.appendChild(meta);
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'linkcard-image';
+    if (el.image) imgDiv.style.backgroundImage = 'url("' + el.image + '")';
+    node.appendChild(imgDiv);
   }
 
   function buildFontPicker(el) {
@@ -1111,6 +1112,53 @@ body:hover .hud, .hud:hover { opacity: 1; }
     setTimeout(() => document.body.removeChild(input), 0);
   }
 
+  function buildNumSliderRow(label, opts) {
+    const r = row(label);
+    const range = document.createElement('input');
+    range.type = 'range';
+    range.className = 'prop-range';
+    range.min = String(opts.min);
+    range.max = String(opts.max);
+    range.step = String(opts.step || 1);
+    range.value = String(opts.value);
+
+    const numI = document.createElement('input');
+    numI.type = 'number';
+    numI.className = 'prop-input prop-num';
+    numI.value = String(opts.value);
+    numI.step = String(opts.step || 1);
+    numI.style.flex = '0 0 64px';
+    numI.style.textAlign = 'right';
+
+    function emit(v) { if (opts.onChange) opts.onChange(v); }
+    function clampForSlider(v) {
+      return Math.max(opts.min, Math.min(opts.max, v));
+    }
+
+    range.addEventListener('input', () => {
+      const v = parseFloat(range.value);
+      numI.value = String(v);
+      emit(v);
+    });
+    numI.addEventListener('input', () => {
+      const v = parseFloat(numI.value);
+      if (isNaN(v)) return;
+      range.value = String(clampForSlider(v));
+      emit(v);
+    });
+    numI.addEventListener('change', () => {
+      let v = parseFloat(numI.value);
+      if (isNaN(v)) v = opts.value;
+      numI.value = String(v);
+      range.value = String(clampForSlider(v));
+      emit(v);
+    });
+
+    r.appendChild(range);
+    r.appendChild(numI);
+    return r;
+  }
+
   function colorInput(value, onChange) {
     const wrap = document.createElement('span');
     wrap.style.display = 'flex';
@@ -1206,7 +1254,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
     const add = section('Add element');
     const addPills = document.createElement('div');
     addPills.className = 'pill-group';
-    [['Text', 'text'], ['Rectangle', 'rect'], ['Circle', 'circle'], ['Image', 'image'], ['Video', 'video'], ['Link Card', 'linkcard']].forEach(opt => {
+    [['Text', 'text'], ['Rectangle', 'rect'], ['Circle', 'circle'], ['Line', 'line'], ['Image', 'image'], ['Video', 'video'], ['Link Card', 'linkcard']].forEach(opt => {
       const p = document.createElement('button');
       p.className = 'pill';
       p.textContent = '+ ' + opt[0];
@@ -1372,61 +1420,26 @@ body:hover .hud, .hud:hover { opacity: 1; }
       urlInput.value = el.link || '';
       urlInput.addEventListener('change', () => {
         const v = urlInput.value.trim();
-        updateElement(el.id, { link: v, domain: el.domain || extractDomain(v) });
+        const patch = { link: v };
+        // If image is still the screenshot of an old URL (or empty), regenerate
+        if (!el.image || el.image.indexOf('mshots/v1/') !== -1) {
+          patch.image = v ? screenshotUrl(v) : '';
+        }
+        updateElement(el.id, patch);
       });
       ur.appendChild(urlInput);
       s.appendChild(ur);
 
-      const fetchR = row('');
-      const fetchBtn = document.createElement('button');
-      fetchBtn.className = 'pill';
-      fetchBtn.textContent = el.title ? 'Refresh metadata' : 'Fetch metadata';
-      fetchBtn.addEventListener('click', async () => {
+      const refreshR = row('');
+      const refreshBtn = document.createElement('button');
+      refreshBtn.className = 'pill';
+      refreshBtn.textContent = 'Refresh screenshot';
+      refreshBtn.addEventListener('click', () => {
         if (!el.link) { alert('URL을 먼저 입력해 주세요.'); return; }
-        const original = fetchBtn.textContent;
-        fetchBtn.disabled = true;
-        fetchBtn.textContent = '...';
-        const data = await fetchLinkPreview(el.link, { bust: true });
-        fetchBtn.disabled = false;
-        if (data) {
-          el.title = data.title || el.title;
-          el.description = data.description || el.description;
-          el.image = data.image || '';
-          el.domain = data.domain || extractDomain(el.link);
-          renderAll();
-        } else {
-          fetchBtn.textContent = original;
-          alert('미리보기를 가져오지 못했습니다.');
-        }
+        updateElement(el.id, { image: screenshotUrl(el.link, { bust: true }) });
       });
-      fetchR.appendChild(fetchBtn);
-      s.appendChild(fetchR);
-
-      const tr = row('Title');
-      const titleInput = document.createElement('input');
-      titleInput.type = 'text';
-      titleInput.className = 'prop-input';
-      titleInput.value = el.title || '';
-      titleInput.addEventListener('input', () => updateElement(el.id, { title: titleInput.value }, { skipPropsRender: true }));
-      tr.appendChild(titleInput);
-      s.appendChild(tr);
-
-      const dr = row('Desc');
-      const descInput = document.createElement('textarea');
-      descInput.className = 'prop-textarea';
-      descInput.value = el.description || '';
-      descInput.addEventListener('input', () => updateElement(el.id, { description: descInput.value }, { skipPropsRender: true }));
-      dr.appendChild(descInput);
-      s.appendChild(dr);
-
-      const domR = row('Domain');
-      const domInput = document.createElement('input');
-      domInput.type = 'text';
-      domInput.className = 'prop-input';
-      domInput.value = el.domain || '';
-      domInput.addEventListener('input', () => updateElement(el.id, { domain: domInput.value }, { skipPropsRender: true }));
-      domR.appendChild(domInput);
-      s.appendChild(domR);
+      refreshR.appendChild(refreshBtn);
+      s.appendChild(refreshR);
 
       const imgR = row('Image URL');
       const imgInput = document.createElement('input');
@@ -1533,6 +1546,27 @@ body:hover .hud, .hud:hover { opacity: 1; }
       repR.appendChild(repBtn);
       s.appendChild(repR);
       frag.appendChild(s);
+    } else if (el.type === 'line') {
+      const s = section('Line');
+
+      s.appendChild(buildNumSliderRow('Length', {
+        min: 20, max: 1280, step: 1, value: el.w,
+        onChange: v => updateElement(el.id, { w: Math.round(v) }, { skipPropsRender: true }),
+      }));
+      s.appendChild(buildNumSliderRow('Thickness', {
+        min: 1, max: 50, step: 1, value: el.h,
+        onChange: v => updateElement(el.id, { h: Math.round(v) }, { skipPropsRender: true }),
+      }));
+      s.appendChild(buildNumSliderRow('Rotation', {
+        min: -180, max: 180, step: 1, value: el.rotation || 0,
+        onChange: v => updateElement(el.id, { rotation: Math.round(v) }, { skipPropsRender: true }),
+      }));
+
+      const cr = row('Color');
+      cr.appendChild(colorInput(el.fill, v => updateElement(el.id, { fill: v }, { skipPropsRender: true })));
+      s.appendChild(cr);
+
+      frag.appendChild(s);
     } else {
       const s = section('Shape');
       const fr = row('Fill');
@@ -1553,6 +1587,10 @@ body:hover .hud, .hud:hover { opacity: 1; }
     ], v => updateElement(el.id, { hover: v })));
     ix.appendChild(hr);
 
+    if (el.hover && el.hover !== 'none') {
+      ix.appendChild(buildStrengthRow(el, 'hoverStrength'));
+    }
+
     const mr = row('Motion');
     mr.appendChild(selectInput(el.motion, [
       ['none', 'None'],
@@ -1563,6 +1601,10 @@ body:hover .hud, .hud:hover { opacity: 1; }
       ['anim-scale', 'Scale in'],
     ], v => updateElement(el.id, { motion: v })));
     ix.appendChild(mr);
+
+    if (el.motion && el.motion !== 'none') {
+      ix.appendChild(buildStrengthRow(el, 'motionStrength'));
+    }
 
     if (el.type !== 'linkcard') {
       const lr = row('Link');
@@ -1636,6 +1678,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       el = textEl({ x: 200, y: 200, w: 480, h: 80, text: 'New text' });
     } else if (type === 'circle') {
       el = shapeEl('circle', { x: 540, y: 260, w: 200, h: 200 });
+    } else if (type === 'line') {
+      el = lineEl();
     } else {
       el = shapeEl('rect', { x: 440, y: 260, w: 400, h: 200 });
     }
@@ -1720,7 +1764,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
     return true;
   }
 
-  async function triggerLinkCardInsert() {
+  function triggerLinkCardInsert() {
     const slide = getCurrentSlide();
     if (!slide) return;
     let url = prompt('링크 URL을 입력하세요:', 'https://');
@@ -1729,39 +1773,20 @@ body:hover .hud, .hud:hover { opacity: 1; }
     if (url === 'https://' || url === 'http://') url = '';
 
     const el = linkcardEl(url, {
-      title: url ? 'Loading...' : 'New link card',
-      description: url || '',
-      domain: extractDomain(url),
+      image: url ? screenshotUrl(url) : '',
     });
     slide.elements.push(el);
     state.selectedElementId = el.id;
     renderAll();
     if (!url) return;
 
-    const data = await fetchLinkPreview(url);
-    const slideStill = state.slides.find(s => s.id === slide.id);
-    if (!slideStill || !slideStill.elements.find(e => e.id === el.id)) return;
-    if (data) {
-      el.title = data.title || '';
-      el.description = data.description || '';
-      el.image = data.image || '';
-      el.domain = data.domain || extractDomain(url);
-    } else {
-      el.title = '';
-      el.description = '';
-      el.domain = extractDomain(url);
-      el.image = screenshotUrl(url);
-    }
-    renderAll();
-
-    // Re-fetch the screenshot once after mShots has had time to render the
-    // real capture (it may serve a placeholder on first hit).
+    // mShots may serve a placeholder on the first hit; re-request with a
+    // cache-buster after a short delay so the real screenshot replaces it.
     setTimeout(() => {
-      const slideStill2 = state.slides.find(s => s.id === slide.id);
-      if (!slideStill2) return;
-      const elStill = slideStill2.elements.find(e => e.id === el.id);
+      const slideStill = state.slides.find(s => s.id === slide.id);
+      if (!slideStill) return;
+      const elStill = slideStill.elements.find(e => e.id === el.id);
       if (!elStill || !elStill.link) return;
-      // Only auto-refresh if the user has not replaced the image manually
       if (elStill.image && elStill.image.indexOf('mshots/v1/') !== -1) {
         elStill.image = screenshotUrl(elStill.link, { bust: true });
         renderAll();
@@ -1992,6 +2017,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       if (typeof s.bgImage !== 'string') s.bgImage = '';
       (s.elements || []).forEach(el => {
         if (typeof el.link !== 'string') el.link = '';
+        if (typeof el.hoverStrength !== 'number') el.hoverStrength = 1;
+        if (typeof el.motionStrength !== 'number') el.motionStrength = 1;
         if (el.type === 'text') {
           if (typeof el.letterSpacing !== 'number') el.letterSpacing = 0;
           if (typeof el.fontStretch !== 'number') el.fontStretch = 100;
@@ -2086,11 +2113,14 @@ body:hover .hud, .hud:hover { opacity: 1; }
 
   function buildPresentElementNode(el) {
     const node = document.createElement('div');
-    node.className = 'el ' + (el.type === 'text' ? 'text' : 'shape-' + el.type);
+    node.className = 'el ' + elTypeClass(el.type);
     node.style.left = el.x + 'px';
     node.style.top = el.y + 'px';
     node.style.width = el.w + 'px';
     node.style.height = el.h + 'px';
+    node.style.setProperty('--hover-strength', String(el.hoverStrength != null ? el.hoverStrength : 1));
+    node.style.setProperty('--motion-strength', String(el.motionStrength != null ? el.motionStrength : 1));
+    if (el.rotation) node.style.transform = 'rotate(' + el.rotation + 'deg)';
     if (el.type === 'text') {
       node.style.fontFamily = resolveFontFamily(el.font);
       node.style.fontSize = el.fontSize + 'px';
@@ -2237,6 +2267,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       if (typeof s.bgImage !== 'string') s.bgImage = '';
       (s.elements || []).forEach(el => {
         if (typeof el.link !== 'string') el.link = '';
+        if (typeof el.hoverStrength !== 'number') el.hoverStrength = 1;
+        if (typeof el.motionStrength !== 'number') el.motionStrength = 1;
         if (el.type === 'text') {
           if (typeof el.letterSpacing !== 'number') el.letterSpacing = 0;
           if (typeof el.fontStretch !== 'number') el.fontStretch = 100;
