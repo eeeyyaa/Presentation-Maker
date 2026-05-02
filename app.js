@@ -6,8 +6,6 @@
 (function () {
   'use strict';
 
-  const CANVAS_W = 1280;
-  const CANVAS_H = 720;
   const STORAGE_KEY = 'pres-gen-state-v1';
 
   const FONT_FAMILIES = {
@@ -59,11 +57,14 @@ __GOOGLE_FONTS_LINKS__
 html, body { margin: 0; padding: 0; height: 100%; background: #000; color: #fff; overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Helvetica Neue", Arial, sans-serif; }
 .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-.frame { position: relative; width: min(100vw, calc(100vh * 16 / 9));
-  height: min(100vh, calc(100vw * 9 / 16)); overflow: hidden; }
-.canvas { position: absolute; top: 50%; left: 50%; width: 1280px; height: 720px;
+.frame { position: relative;
+  width: min(100vw, calc(100vh * var(--cw, 1280) / var(--ch, 720)));
+  height: min(100vh, calc(100vw * var(--ch, 720) / var(--cw, 1280)));
+  overflow: hidden; }
+.canvas { position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%); transform-origin: center center; }
 .el { position: absolute; user-select: none;
+  transform: rotate(var(--rotation, 0deg));
   transition: transform 0.25s ease, filter 0.25s ease, opacity 0.25s ease, color 0.25s ease, background 0.25s ease; }
 .el.text { display: flex; align-items: center; line-height: 1.3; padding: 4px; word-break: break-word; }
 .el.text > div { width: 100%; }
@@ -72,15 +73,15 @@ html, body { margin: 0; padding: 0; height: 100%; background: #000; color: #fff;
 .el[data-link] { cursor: pointer; }
 .el.linkcard { background:#1f1f1f; border-radius:8px; overflow:hidden; }
 .linkcard-image { position:absolute; inset:0; background-size:cover; background-position:top center; background-repeat:no-repeat; background-color:#1f1f1f; }
-.el.hover-scale:hover { transform: scale(calc(1 + 0.05 * var(--hover-strength, 1))); }
+.el.hover-scale:hover { transform: rotate(var(--rotation, 0deg)) scale(calc(1 + 0.05 * var(--hover-strength, 1))); }
 .el.hover-glow:hover { filter: drop-shadow(0 0 calc(12px * var(--hover-strength, 1)) rgba(255,255,255,0.55)); }
-.el.hover-lift:hover { transform: translateY(calc(-6px * var(--hover-strength, 1))); }
+.el.hover-lift:hover { transform: rotate(var(--rotation, 0deg)) translateY(calc(-6px * var(--hover-strength, 1))); }
 .el.hover-fade:hover { opacity: calc(1 - 0.4 * var(--hover-strength, 1)); }
 @keyframes fadeIn { from { opacity: calc(1 - var(--motion-strength, 1)); } to { opacity: 1; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(calc(30px * var(--motion-strength, 1))); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideLeft { from { opacity: 0; transform: translateX(calc(-40px * var(--motion-strength, 1))); } to { opacity: 1; transform: translateX(0); } }
-@keyframes slideRight { from { opacity: 0; transform: translateX(calc(40px * var(--motion-strength, 1))); } to { opacity: 1; transform: translateX(0); } }
-@keyframes scaleUp { from { opacity: 0; transform: scale(calc(1 - 0.15 * var(--motion-strength, 1))); } to { opacity: 1; transform: scale(1); } }
+@keyframes slideUp { from { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateY(calc(60px * var(--motion-strength, 1))); } to { opacity: 1; transform: rotate(var(--rotation, 0deg)) translateY(0); } }
+@keyframes slideLeft { from { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(calc(-80px * var(--motion-strength, 1))); } to { opacity: 1; transform: rotate(var(--rotation, 0deg)) translateX(0); } }
+@keyframes slideRight { from { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(calc(80px * var(--motion-strength, 1))); } to { opacity: 1; transform: rotate(var(--rotation, 0deg)) translateX(0); } }
+@keyframes scaleUp { from { opacity: 0; transform: rotate(var(--rotation, 0deg)) scale(calc(1 - 0.3 * var(--motion-strength, 1))); } to { opacity: 1; transform: rotate(var(--rotation, 0deg)) scale(1); } }
 .anim-fade { animation: fadeIn .6s ease both; }
 .anim-up { animation: slideUp .6s cubic-bezier(.2,.8,.2,1) both; }
 .anim-left { animation: slideLeft .6s cubic-bezier(.2,.8,.2,1) both; }
@@ -108,7 +109,6 @@ body:hover .hud, .hud:hover { opacity: 1; }
 <script id="data" type="application/json">__SLIDES_JSON__</script>
 <script>
 (function(){
-  var CANVAS_W=1280,CANVAS_H=720;
   var FF={
     sans:'-apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Helvetica Neue", Arial, sans-serif',
     serif:'Georgia, "Times New Roman", "Nanum Myeongjo", serif',
@@ -116,15 +116,22 @@ body:hover .hud, .hud:hover { opacity: 1; }
     display:'"Helvetica Neue", "Pretendard", Impact, Arial, sans-serif'
   };
   function fontFamily(name){ return FF[name] || name || FF.sans; }
-  var slides=[];
-  try { slides=JSON.parse(document.getElementById('data').textContent)||[]; } catch(e) {}
+  var data=null;
+  try { data=JSON.parse(document.getElementById('data').textContent); } catch(e) {}
+  var slides = (data && (Array.isArray(data) ? data : data.slides)) || [];
+  var CW = (data && data.canvasW) || 1280;
+  var CH = (data && data.canvasH) || 720;
   if(!slides.length){slides=[{bg:'#0a0a0a',elements:[]}];}
   var idx=0;
   var canvas=document.getElementById('canvas');
   var counter=document.getElementById('counter');
+  canvas.style.width = CW + 'px';
+  canvas.style.height = CH + 'px';
+  document.documentElement.style.setProperty('--cw', CW);
+  document.documentElement.style.setProperty('--ch', CH);
   function fit(){
     var frame=document.querySelector('.frame');
-    var s=Math.min(frame.clientWidth/CANVAS_W,frame.clientHeight/CANVAS_H);
+    var s=Math.min(frame.clientWidth/CW, frame.clientHeight/CH);
     canvas.style.transform='translate(-50%, -50%) scale('+s+')';
   }
   function render(){
@@ -148,7 +155,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
       node.style.width=el.w+'px'; node.style.height=el.h+'px';
       node.style.setProperty('--hover-strength', String(el.hoverStrength!=null?el.hoverStrength:1));
       node.style.setProperty('--motion-strength', String(el.motionStrength!=null?el.motionStrength:1));
-      if(el.rotation) node.style.transform='rotate('+el.rotation+'deg)';
+      if(el.rotation) node.style.setProperty('--rotation', el.rotation+'deg');
       if(el.type==='text'){
         node.style.fontFamily=fontFamily(el.font);
         node.style.fontSize=el.fontSize+'px';
@@ -221,13 +228,20 @@ body:hover .hud, .hud:hover { opacity: 1; }
     if(linked){
       var u=linked.getAttribute('data-link');
       if(u){
-        if(!/^https?:\\/\\//i.test(u)) u='https://'+u;
-        // Modifier/middle click opens a new tab; plain click navigates in-place
-        // so the browser back button returns to the current slide.
-        if(e.ctrlKey||e.metaKey||e.shiftKey||e.button===1){
-          window.open(u,'_blank','noopener');
+        if(u.indexOf('slide:')===0){
+          var sid=u.slice(6);
+          var newIdx=-1;
+          for(var i=0;i<slides.length;i++){if(slides[i].id===sid){newIdx=i;break;}}
+          if(newIdx>=0){idx=newIdx;render();}
         } else {
-          location.href=u;
+          if(!/^https?:\\/\\//i.test(u)) u='https://'+u;
+          // Modifier/middle click opens a new tab; plain click navigates in-place
+          // so the browser back button returns to the current slide.
+          if(e.ctrlKey||e.metaKey||e.shiftKey||e.button===1){
+            window.open(u,'_blank','noopener');
+          } else {
+            location.href=u;
+          }
         }
       }
       e.stopPropagation();
@@ -435,7 +449,14 @@ body:hover .hud, .hud:hover { opacity: 1; }
     currentSlideId: null,
     selectedElementId: null,
     editingElementId: null,
+    canvasW: 1280,
+    canvasH: 720,
   };
+
+  function applyCanvasSize() {
+    document.documentElement.style.setProperty('--canvas-w', state.canvasW + 'px');
+    document.documentElement.style.setProperty('--canvas-h', state.canvasH + 'px');
+  }
 
   // Local fonts detected via Local Font Access API. Cached in localStorage.
   let localFonts = [];
@@ -573,6 +594,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         slides: state.slides,
         currentSlideId: state.currentSlideId,
+        canvasW: state.canvasW,
+        canvasH: state.canvasH,
       }));
     } catch (e) {}
   }
@@ -585,6 +608,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
       if (!data || !Array.isArray(data.slides) || !data.slides.length) return false;
       state.slides = data.slides;
       state.currentSlideId = data.currentSlideId || data.slides[0].id;
+      if (typeof data.canvasW === 'number' && data.canvasW > 0) state.canvasW = data.canvasW;
+      if (typeof data.canvasH === 'number' && data.canvasH > 0) state.canvasH = data.canvasH;
       return true;
     } catch (e) {
       return false;
@@ -636,8 +661,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
 
       const inner = document.createElement('div');
       inner.className = 'slide-thumb-inner';
-      inner.style.width = CANVAS_W + 'px';
-      inner.style.height = CANVAS_H + 'px';
+      inner.style.width = state.canvasW + 'px';
+      inner.style.height = state.canvasH + 'px';
       inner.style.backgroundColor = slide.bg;
       if (slide.bgImage) {
         inner.style.backgroundImage = 'url("' + slide.bgImage + '")';
@@ -654,7 +679,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
         const w = thumb.clientWidth;
         const h = thumb.clientHeight;
         if (w > 0 && h > 0) {
-          const s = Math.min(w / CANVAS_W, h / CANVAS_H);
+          const s = Math.min(w / state.canvasW, h / state.canvasH);
           inner.style.transform = 'scale(' + s + ')';
         }
       });
@@ -693,7 +718,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
     node.style.height = el.h + 'px';
     node.style.setProperty('--hover-strength', String(el.hoverStrength != null ? el.hoverStrength : 1));
     node.style.setProperty('--motion-strength', String(el.motionStrength != null ? el.motionStrength : 1));
-    if (el.rotation) node.style.transform = 'rotate(' + el.rotation + 'deg)';
+    if (el.rotation) node.style.setProperty('--rotation', el.rotation + 'deg');
 
     if (el.type === 'text') {
       node.style.fontFamily = resolveFontFamily(el.font);
@@ -1264,6 +1289,61 @@ body:hover .hud, .hud:hover { opacity: 1; }
     add.appendChild(addPills);
     frag.appendChild(add);
 
+    // Canvas size (applies to all slides)
+    const cv = section('Canvas (all slides)');
+    const presetRow = document.createElement('div');
+    presetRow.className = 'prop-row';
+    const presetPills = document.createElement('div');
+    presetPills.className = 'pill-group';
+    const PRESETS = [
+      ['16:9', 1280, 720],
+      ['HD', 1920, 1080],
+      ['4:3', 1024, 768],
+      ['1:1', 1080, 1080],
+      ['9:16', 720, 1280],
+    ];
+    PRESETS.forEach(([label, w, h]) => {
+      const p = document.createElement('button');
+      p.className = 'pill';
+      if (state.canvasW === w && state.canvasH === h) p.classList.add('active');
+      p.textContent = label;
+      p.title = w + ' × ' + h;
+      p.addEventListener('click', () => {
+        state.canvasW = w;
+        state.canvasH = h;
+        applyCanvasSize();
+        fitCanvas();
+        renderAll();
+      });
+      presetPills.appendChild(p);
+    });
+    presetRow.appendChild(presetPills);
+    cv.appendChild(presetRow);
+
+    const wRow = row('Width');
+    wRow.appendChild(numInput(state.canvasW, v => {
+      const n = Math.max(100, Math.min(8000, Math.round(v) || 0));
+      if (!n) return;
+      state.canvasW = n;
+      applyCanvasSize();
+      fitCanvas();
+      renderAll();
+    }));
+    cv.appendChild(wRow);
+
+    const hRow = row('Height');
+    hRow.appendChild(numInput(state.canvasH, v => {
+      const n = Math.max(100, Math.min(8000, Math.round(v) || 0));
+      if (!n) return;
+      state.canvasH = n;
+      applyCanvasSize();
+      fitCanvas();
+      renderAll();
+    }));
+    cv.appendChild(hRow);
+
+    frag.appendChild(cv);
+
     return frag;
   }
 
@@ -1607,17 +1687,43 @@ body:hover .hud, .hud:hover { opacity: 1; }
     }
 
     if (el.type !== 'linkcard') {
+      const isSlideLink = !!(el.link && el.link.indexOf('slide:') === 0);
       const lr = row('Link');
       const linkInput = document.createElement('input');
       linkInput.type = 'url';
       linkInput.className = 'prop-input';
       linkInput.placeholder = 'https://...';
-      linkInput.value = el.link || '';
+      linkInput.value = isSlideLink ? '' : (el.link || '');
+      linkInput.disabled = isSlideLink;
       linkInput.addEventListener('change', () => {
-        updateElement(el.id, { link: linkInput.value.trim() }, { skipPropsRender: true });
+        updateElement(el.id, { link: linkInput.value.trim() });
       });
       lr.appendChild(linkInput);
       ix.appendChild(lr);
+
+      const gr = row('Go to');
+      const slideSel = document.createElement('select');
+      slideSel.className = 'prop-select';
+      const noneOpt = document.createElement('option');
+      noneOpt.value = '';
+      noneOpt.textContent = '(none)';
+      slideSel.appendChild(noneOpt);
+      state.slides.forEach((s, i) => {
+        const opt = document.createElement('option');
+        opt.value = 'slide:' + s.id;
+        opt.textContent = 'Slide ' + (i + 1);
+        if (el.link === opt.value) opt.selected = true;
+        slideSel.appendChild(opt);
+      });
+      slideSel.addEventListener('change', () => {
+        if (slideSel.value) {
+          updateElement(el.id, { link: slideSel.value });
+        } else if (isSlideLink) {
+          updateElement(el.id, { link: '' });
+        }
+      });
+      gr.appendChild(slideSel);
+      ix.appendChild(gr);
     }
 
     const hint = document.createElement('div');
@@ -1715,8 +1821,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
     if (!slide) return;
     const fit = fitToCanvas(meta.w, meta.h);
     const el = imageEl(dataUrl, {
-      x: Math.round((CANVAS_W - fit.w) / 2),
-      y: Math.round((CANVAS_H - fit.h) / 2),
+      x: Math.round((state.canvasW - fit.w) / 2),
+      y: Math.round((state.canvasH - fit.h) / 2),
       w: fit.w, h: fit.h,
     });
     slide.elements.push(el);
@@ -1734,8 +1840,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
     if (!slide) return;
     const fit = fitToCanvas(meta.w || 1280, meta.h || 720);
     const el = videoEl(dataUrl, {
-      x: Math.round((CANVAS_W - fit.w) / 2),
-      y: Math.round((CANVAS_H - fit.h) / 2),
+      x: Math.round((state.canvasW - fit.w) / 2),
+      y: Math.round((state.canvasH - fit.h) / 2),
       w: fit.w, h: fit.h,
     });
     slide.elements.push(el);
@@ -1889,7 +1995,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
   function onDrag(e) {
     if (!dragState) return;
     const rect = els.canvas.getBoundingClientRect();
-    const scale = rect.width / CANVAS_W || 1;
+    const scale = rect.width / state.canvasW || 1;
     const dx = (e.clientX - dragState.startX) / scale;
     const dy = (e.clientY - dragState.startY) / scale;
     if (dragState.mode === 'move') {
@@ -1939,7 +2045,12 @@ body:hover .hud, .hud:hover { opacity: 1; }
         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
         '<link rel="stylesheet" href="' + href + '">';
     }
-    const safeJson = JSON.stringify(state.slides).replace(/</g, '\\u003c');
+    const exportData = {
+      canvasW: state.canvasW,
+      canvasH: state.canvasH,
+      slides: state.slides,
+    };
+    const safeJson = JSON.stringify(exportData).replace(/</g, '\\u003c');
     const html = EXPORT_TEMPLATE
       .replace('__GOOGLE_FONTS_LINKS__', () => linksHtml)
       .replace('__SLIDES_JSON__', () => safeJson);
@@ -2001,12 +2112,23 @@ body:hover .hud, .hud:hover { opacity: 1; }
   function loadProjectFromHtml(text) {
     const m = text.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/);
     if (!m) throw new Error('내장 슬라이드 데이터를 찾을 수 없습니다');
-    applyLoadedSlides(JSON.parse(m[1]));
+    applyLoadedData(JSON.parse(m[1]));
   }
   function loadProjectFromJson(text) {
-    const data = JSON.parse(text);
-    const slides = Array.isArray(data) ? data : data.slides;
+    const parsed = JSON.parse(text);
+    applyLoadedData(parsed);
+  }
+  function applyLoadedData(parsed) {
+    let slides;
+    if (Array.isArray(parsed)) {
+      slides = parsed;
+    } else if (parsed && typeof parsed === 'object') {
+      slides = parsed.slides;
+      if (typeof parsed.canvasW === 'number' && parsed.canvasW > 0) state.canvasW = parsed.canvasW;
+      if (typeof parsed.canvasH === 'number' && parsed.canvasH > 0) state.canvasH = parsed.canvasH;
+    }
     if (!Array.isArray(slides)) throw new Error('Invalid slide data');
+    applyCanvasSize();
     applyLoadedSlides(slides);
   }
   function applyLoadedSlides(slides) {
@@ -2086,14 +2208,14 @@ body:hover .hud, .hud:hover { opacity: 1; }
 
     const sw = stage.clientWidth;
     const sh = stage.clientHeight;
-    const scale = Math.min(sw / CANVAS_W, sh / CANVAS_H);
+    const scale = Math.min(sw / state.canvasW, sh / state.canvasH);
 
     const inner = document.createElement('div');
     inner.style.position = 'absolute';
     inner.style.left = '50%';
     inner.style.top = '50%';
-    inner.style.width = CANVAS_W + 'px';
-    inner.style.height = CANVAS_H + 'px';
+    inner.style.width = state.canvasW + 'px';
+    inner.style.height = state.canvasH + 'px';
     inner.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
     inner.style.transformOrigin = 'center center';
 
@@ -2120,7 +2242,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
     node.style.height = el.h + 'px';
     node.style.setProperty('--hover-strength', String(el.hoverStrength != null ? el.hoverStrength : 1));
     node.style.setProperty('--motion-strength', String(el.motionStrength != null ? el.motionStrength : 1));
-    if (el.rotation) node.style.transform = 'rotate(' + el.rotation + 'deg)';
+    if (el.rotation) node.style.setProperty('--rotation', el.rotation + 'deg');
     if (el.type === 'text') {
       node.style.fontFamily = resolveFontFamily(el.font);
       node.style.fontSize = el.fontSize + 'px';
@@ -2171,9 +2293,19 @@ body:hover .hud, .hud:hover { opacity: 1; }
       node.style.cursor = 'pointer';
       node.addEventListener('click', (e) => {
         e.stopPropagation();
-        let u = el.link;
-        if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
-        window.open(u, '_blank', 'noopener');
+        const u = el.link;
+        if (u.indexOf('slide:') === 0) {
+          const sid = u.slice(6);
+          const i = state.slides.findIndex(s => s.id === sid);
+          if (i >= 0) {
+            presentIndex = i;
+            renderPresent();
+          }
+          return;
+        }
+        let url = u;
+        if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(url)) url = 'https://' + url;
+        window.open(url, '_blank', 'noopener');
       });
     }
     return node;
@@ -2184,8 +2316,8 @@ body:hover .hud, .hud:hover { opacity: 1; }
     const wrap = document.getElementById('canvasWrap');
     if (!wrap) return;
     const padding = 64;
-    const sx = (wrap.clientWidth - padding) / CANVAS_W;
-    const sy = (wrap.clientHeight - padding) / CANVAS_H;
+    const sx = (wrap.clientWidth - padding) / state.canvasW;
+    const sy = (wrap.clientHeight - padding) / state.canvasH;
     const scale = Math.max(0.2, Math.min(1, sx, sy));
     document.documentElement.style.setProperty('--canvas-scale', String(scale));
   }
@@ -2282,6 +2414,7 @@ body:hover .hud, .hud:hover { opacity: 1; }
         if (el.font && GOOGLE_FONT_SET.has(el.font)) loadGoogleFont(el.font);
       });
     });
+    applyCanvasSize();
     renderAll();
   }
 
