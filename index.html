@@ -13,6 +13,7 @@
       <span class="brand-name">PRES</span>
     </div>
     <div class="topbar-actions">
+      <button class="btn btn-ghost" id="btnPreview" title="Preview the exported HTML in a new tab">Preview</button>
       <button class="btn btn-ghost" id="btnSave" title="Export deployable HTML">Save</button>
       <button class="btn btn-ghost" id="btnLoad" title="Load project / image / video / URL shortcut">Load</button>
       <button class="btn btn-primary" id="btnPresent" title="Start presentation">Present</button>
@@ -29,6 +30,8 @@
       <div class="slides-list" id="slidesList"></div>
       <button class="btn btn-block btn-outline" id="btnAddSlide">+ Add Slide</button>
     </aside>
+
+    <div class="resizer" id="resizerLeft" title="Drag to resize"></div>
 
     <!-- Canvas area -->
     <section class="canvas-area">
@@ -48,7 +51,18 @@
         <button class="btn btn-ghost" data-add="video">+ Video</button>
         <button class="btn btn-ghost" data-add="linkcard">+ Link Card</button>
         <span class="toolbar-sep"></span>
+        <button class="btn btn-ghost" id="btnToggleGrid" title="Toggle grid overlay">Grid</button>
+        <button class="btn btn-ghost" id="btnToggleGuides" title="Toggle guide lines">Guides</button>
+        <span class="toolbar-sep"></span>
+        <button class="btn btn-ghost" id="btnZoomOut" title="Zoom out (Ctrl+-)">−</button>
+        <button class="btn btn-ghost" id="btnZoomLabel" title="Click for zoom presets">Fit</button>
+        <button class="btn btn-ghost" id="btnZoomIn" title="Zoom in (Ctrl++)">+</button>
+        <span class="toolbar-sep"></span>
         <button class="btn btn-ghost btn-danger" id="btnDeleteElement" disabled>Delete element</button>
+      </div>
+      <div class="content-editor" id="contentEditor" hidden>
+        <div class="content-editor-label">Content</div>
+        <textarea id="contentEditorText" class="content-editor-text" placeholder="Type text here..." spellcheck="false"></textarea>
       </div>
     </section>
 
