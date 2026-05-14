@@ -11,17 +11,34 @@
     <div class="brand">
       <span class="dot"></span>
       <span class="brand-name">PRES</span>
+      <button class="btn btn-ghost btn-library" id="btnProjects" title="Open saved project library">Projects</button>
     </div>
     <div class="topbar-actions">
       <button class="btn btn-ghost" id="btnPreview" title="Preview the exported HTML in a new tab">Preview</button>
-      <button class="btn btn-ghost" id="btnSave" title="Export deployable HTML">Save</button>
+      <button class="btn btn-ghost" id="btnSaveProject" title="Save editable project JSON">Save Project</button>
+      <div class="export-wrap" id="exportWrap">
+        <button class="btn btn-ghost" id="btnExport" title="Export final presentation">Export</button>
+        <div class="export-menu" id="exportMenu" hidden>
+          <button type="button" id="btnExportHtml">
+            <span>HTML</span>
+            <small>GH Pages</small>
+          </button>
+          <button type="button" id="btnExportPdf">
+            <span>PDF</span>
+            <small>File</small>
+          </button>
+          <button type="button" id="btnExportPptx">
+            <span>PPTX</span>
+            <small>PowerPoint</small>
+          </button>
+        </div>
+      </div>
       <button class="btn btn-ghost" id="btnLoad" title="Load project / image / video / URL shortcut">Load</button>
       <button class="btn btn-primary" id="btnPresent" title="Start presentation">Present</button>
     </div>
   </header>
 
   <main class="workspace">
-    <!-- Slides panel -->
     <aside class="slides-panel">
       <div class="panel-header">
         <span class="panel-title">Slides</span>
@@ -33,7 +50,6 @@
 
     <div class="resizer" id="resizerLeft" title="Drag to resize"></div>
 
-    <!-- Canvas area -->
     <section class="canvas-area">
       <div class="canvas-wrap" id="canvasWrap">
         <div class="canvas-frame" id="canvasFrame">
@@ -42,31 +58,38 @@
           </div>
         </div>
       </div>
-      <div class="canvas-toolbar">
-        <button class="btn btn-ghost" data-add="text">+ Text</button>
-        <button class="btn btn-ghost" data-add="rect">+ Rect</button>
-        <button class="btn btn-ghost" data-add="circle">+ Circle</button>
-        <button class="btn btn-ghost" data-add="line">+ Line</button>
-        <button class="btn btn-ghost" data-add="image">+ Image</button>
-        <button class="btn btn-ghost" data-add="video">+ Video</button>
-        <button class="btn btn-ghost" data-add="linkcard">+ Link Card</button>
-        <span class="toolbar-sep"></span>
-        <button class="btn btn-ghost" id="btnToggleGrid" title="Toggle grid overlay">Grid</button>
-        <button class="btn btn-ghost" id="btnToggleGuides" title="Toggle guide lines">Guides</button>
-        <span class="toolbar-sep"></span>
-        <button class="btn btn-ghost" id="btnZoomOut" title="Zoom out (Ctrl+-)">−</button>
-        <button class="btn btn-ghost" id="btnZoomLabel" title="Click for zoom presets">Fit</button>
-        <button class="btn btn-ghost" id="btnZoomIn" title="Zoom in (Ctrl++)">+</button>
-        <span class="toolbar-sep"></span>
-        <button class="btn btn-ghost btn-danger" id="btnDeleteElement" disabled>Delete element</button>
+      <div class="selection-align-toolbar" id="selectionAlignToolbar" hidden aria-label="Selection alignment">
+        <button type="button" data-align-selection="left" title="Align left" aria-label="Align left"><span class="align-icon align-left"></span></button>
+        <button type="button" data-align-selection="center" title="Align horizontal center" aria-label="Align horizontal center"><span class="align-icon align-center"></span></button>
+        <button type="button" data-align-selection="right" title="Align right" aria-label="Align right"><span class="align-icon align-right"></span></button>
+        <span></span>
+        <button type="button" data-align-selection="top" title="Align top" aria-label="Align top"><span class="align-icon align-top"></span></button>
+        <button type="button" data-align-selection="middle" title="Align vertical center" aria-label="Align vertical center"><span class="align-icon align-middle"></span></button>
+        <button type="button" data-align-selection="bottom" title="Align bottom" aria-label="Align bottom"><span class="align-icon align-bottom"></span></button>
+        <span></span>
+        <button type="button" data-selection-action="group" title="Group selected elements" aria-label="Group selected elements"><span class="group-icon group-on"></span></button>
+        <button type="button" data-selection-action="ungroup" title="Ungroup selected elements" aria-label="Ungroup selected elements"><span class="group-icon group-off"></span></button>
+        <span></span>
+        <button type="button" data-distribute="h" title="Distribute horizontally (equal spacing)" aria-label="Distribute horizontally"><span class="dist-icon dist-h"></span></button>
+        <input type="number" step="1" class="dist-gap-input" data-distribute-gap="h" title="Horizontal gap (px)" aria-label="Horizontal gap" />
+        <button type="button" data-distribute="v" title="Distribute vertically (equal spacing)" aria-label="Distribute vertically"><span class="dist-icon dist-v"></span></button>
+        <input type="number" step="1" class="dist-gap-input" data-distribute-gap="v" title="Vertical gap (px)" aria-label="Vertical gap" />
       </div>
+      <div class="content-resizer" id="contentResizer" title="Drag to resize content panel"></div>
       <div class="content-editor" id="contentEditor" hidden>
-        <div class="content-editor-label">Content</div>
-        <textarea id="contentEditorText" class="content-editor-text" placeholder="Type text here..." spellcheck="false"></textarea>
+        <div class="content-editor-head">
+          <div>
+            <div class="content-editor-label">Content</div>
+            <div class="content-editor-hint">Write a title, body, or bullet lines. Generate places them on the current slide.</div>
+          </div>
+          <button class="content-generate" id="btnGenerateContent" type="button">Generate</button>
+        </div>
+        <textarea id="contentEditorText" class="content-editor-text" placeholder="Title&#10;- Key point&#10;- Key point&#10;Body text..." spellcheck="false"></textarea>
       </div>
     </section>
 
-    <!-- Properties panel -->
+    <div class="resizer resizer-right" id="resizerRight" title="Drag to resize"></div>
+
     <aside class="properties-panel" id="propertiesPanel">
       <div class="panel-header">
         <span class="panel-title">Properties</span>
@@ -77,18 +100,34 @@
     </aside>
   </main>
 
-  <!-- Present mode overlay -->
+  <div class="project-library-overlay" id="projectLibraryOverlay" hidden>
+    <section class="project-library">
+      <div class="project-library-header">
+        <div class="project-library-titlebar">
+          <button class="project-library-back" id="btnCloseProjects" type="button" title="Back to editor" aria-label="Back to editor"></button>
+          <div>
+            <h2>Projects</h2>
+          </div>
+        </div>
+      </div>
+      <div class="project-library-body" id="projectLibraryBody"></div>
+      <button class="project-scroll-top" id="btnProjectScrollTop" type="button" title="Back to top" aria-label="Back to top" hidden></button>
+    </section>
+  </div>
+
   <div class="present-overlay" id="presentOverlay" hidden>
+    <button class="present-nav-toggle" id="presentNavToggle" title="Slides" aria-label="Open slides"></button>
+    <aside class="present-nav" id="presentNav" aria-label="Slides"></aside>
     <div class="present-stage" id="presentStage"></div>
     <div class="present-controls">
-      <button class="btn btn-ghost" id="btnPrev">‹ Prev</button>
+      <button class="btn btn-ghost" id="btnPrev">Prev</button>
       <span class="present-counter" id="presentCounter">1 / 1</span>
-      <button class="btn btn-ghost" id="btnNext">Next ›</button>
+      <button class="btn btn-ghost" id="btnNext">Next</button>
       <button class="btn btn-ghost" id="btnExitPresent">Exit (Esc)</button>
     </div>
   </div>
 
-  <input type="file" id="fileLoader" accept=".html,.htm,.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.avif,.mp4,.webm,.mov,.m4v,.ogv,.mkv,.url,.webloc,.txt,application/json,text/html,text/plain,image/*,video/*" hidden />
+  <input type="file" id="fileLoader" accept=".html,.htm,.json,.pres.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.avif,.mp4,.webm,.mov,.m4v,.ogv,.mkv,.url,.webloc,.txt,application/json,text/html,text/plain,image/*,video/*" hidden />
 
   <script src="app.js"></script>
 </body>
